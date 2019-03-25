@@ -1,8 +1,107 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
-  "variables": {},
-  "resources": [],
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Key Vault."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the Logic App."
+      },
+      "defaultValue": "[resourceGroup().location]"
+    }
+  },
+  "variables": {
+    "logicApp": {
+      "name": "[parameters('logicAppName')]",
+      "apiVersion": "[providers('Microsoft.Logic', 'workflows').apiVersions[0]]",
+      "location": "[parameters('location')]"
+    },
+    "keyVault": {
+      "name": "[parameters('keyVaultName')]",
+      "apiVersion": "2016-10-01",
+      "location": "[parameters('location')]",
+      "baseUri": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE: Logic App with Managed Identity ###",
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "[variables('logicApp').apiVersion]",
+      "location": "[variables('logicApp').location]",
+      "tags": {},
+      "name": "[variables('logicApp').name]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "state": "Enabled",
+        "parameters": {},
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "keyVault": {
+              "type": "object",
+              "defaultValue": "[variables('keyVault')]"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {}
+              }
+            }
+          },
+          "actions": {
+            "GetSecret": {
+              "type": "Http",
+              "runAfter": {},
+              "inputs": {
+                "method": "GET",
+                "uri": "@{parameters('keyVault')['baseUri']}secrets/@{triggerBody()?.name}",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://vault.azure.net"
+                },
+                "queries": {
+                  "api-version": "@parameters('keyVault')['apiVersion']"
+                }
+              }
+            },
+            "Response": {
+              "type": "Response",
+              "runAfter": {
+                "GetSecret": [
+                  "Succeeded",
+                  "Failed"
+                ]
+              },
+              "kind": "HTTP",
+              "inputs": {
+                "statusCode": "@outputs('GetSecret').statusCode",
+                "body": "@body('GetSecret')"
+              }
+            }
+          },
+          "outputs": {}
+        }
+      }
+    }
+  ],
   "outputs": {}
 }
