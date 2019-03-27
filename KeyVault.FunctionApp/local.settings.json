@@ -4,6 +4,18 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
 
-    "KeyVaultName": "gib2019kv"
+    "KeyVaultName": "gib2019kv",
+
+    "OpenApi__Info__Version": "2.0.0",
+    "OpenApi__Info__Title": "GIB2019 Key Vault API",
+    "OpenApi__Info__Description": "A Key Vault API that runs on Azure Functions 2.x for GIB2019.",
+    "OpenApi__Info__TermsOfService": "https://github.com/fairdincom/GIB2019-LogicApps-KeyVault-Demo",
+    "OpenApi__Info__Contact__Name": "fairdin.com",
+    "OpenApi__Info__Contact__Email": "no-reply@fairdin.com",
+    "OpenApi__Info__Contact__Url": "https://github.com/fairdincom/GIB2019-LogicApps-KeyVault-Demo/issues",
+    "OpenApi__Info__License__Name": "MIT",
+    "OpenApi__Info__License__Url": "http://opensource.org/licenses/MIT",
+
+    "OpenApi__ApiKey": ""
   }
 }

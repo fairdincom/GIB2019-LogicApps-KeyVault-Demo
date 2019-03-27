@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
+using Aliencube.AzureFunctions.Extensions.OpenApi.Attributes;
+using Aliencube.AzureFunctions.Extensions.OpenApi.Enums;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +16,7 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 using Newtonsoft.Json;
 
@@ -22,17 +28,22 @@ namespace KeyVault.FunctionApp
         private static IKeyVaultClient kv = GetKeyVaultClient();
 
         [FunctionName(nameof(GetSecrets))]
+        [OpenApiOperation("list", "secret", Summary = "Gets the list of secrets", Description = "This gets the list of secrets.", Visibility = OpenApiVisibilityType.Important)]
+        [OpenApiResponseBody(HttpStatusCode.OK, "application/json", typeof(SecretCollectionResponseModel), Summary = "Secret collection response.")]
         public static async Task<IActionResult> GetSecrets(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "secrets")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "secrets")] HttpRequest req,
             ILogger log)
         {
             IActionResult result;
             try
             {
-                var value = await kv.GetSecretsAsync(keyVaultBaseUrl)
-                                    .ConfigureAwait(false);
+                var response = await kv.GetSecretsAsync(keyVaultBaseUrl)
+                                       .ConfigureAwait(false);
+                var models = response.OfType<SecretItem>()
+                                     .Select(p => new SecretResponseModel() { Name = p.Identifier.Name })
+                                     .ToList();
 
-                result = new OkObjectResult(value);
+                result = new OkObjectResult(new SecretCollectionResponseModel() { Items = models });
             }
             catch (KeyVaultErrorException ex)
             {
@@ -53,18 +64,22 @@ namespace KeyVault.FunctionApp
         }
 
         [FunctionName(nameof(GetSecret))]
+        [OpenApiOperation("view", "secret", Summary = "Gets the secret", Description = "This gets the secret.", Visibility = OpenApiVisibilityType.Important)]
+        [OpenApiParameter("name", In = ParameterLocation.Path, Required = true, Type = typeof(string), Description = "The secret name.")]
+        [OpenApiResponseBody(HttpStatusCode.OK, "application/json", typeof(SecretResponseModel), Summary = "Secret response.")]
         public static async Task<IActionResult> GetSecret(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "secrets/{name}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "secrets/{name}")] HttpRequest req,
             string name,
             ILogger log)
         {
             IActionResult result;
             try
             {
-                var value = await kv.GetSecretAsync(keyVaultBaseUrl, name)
-                                    .ConfigureAwait(false);
+                var response = await kv.GetSecretAsync(keyVaultBaseUrl, name)
+                                       .ConfigureAwait(false);
+                var model = new SecretResponseModel() { Name = response.SecretIdentifier.Name, Value = response.Value };
 
-                result = new OkObjectResult(value);
+                result = new OkObjectResult(model);
             }
             catch (KeyVaultErrorException ex)
             {
