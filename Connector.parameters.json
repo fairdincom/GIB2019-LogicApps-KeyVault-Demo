@@ -1,5 +1,142 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {}
+  "parameters": {
+    "customApiName": {
+      "value": "[CUSTOM_API_NAME]"
+    },
+    "customApiDisplayName": {
+      "value": "Key Vault"
+    },
+    "customApiDescription": {
+      "value": "Key Vault Custom API for Logic App"
+    },
+    "customApiIconUri": {
+      "value": "https://raw.githubusercontent.com/aliencube/Key-Vault-Connector-for-Logic-Apps/dev/icons/keyvault-custom-api.png"
+    },
+    "customApiFunctionAppName": {
+      "value": "[FUNCTION_APP_NAME]"
+    },
+    "customApiSwaggerDefinition": {
+      "value": {
+        "swagger": "2.0",
+        "info": {
+          "title": "GIB2019 Key Vault API",
+          "description": "A Key Vault API that runs on Azure Functions 2.x for GIB2019.",
+          "termsOfService": "https://github.com/fairdincom/GIB2019-LogicApps-KeyVault-Demo",
+          "contact": {
+            "name": "fairdin.com",
+            "url": "https://github.com/fairdincom/GIB2019-LogicApps-KeyVault-Demo/issues",
+            "email": "no-reply@fairdin.com"
+          },
+          "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+          },
+          "version": "2.0.0"
+        },
+        "host": "gib2019-fncapp.azurewebsites.net",
+        "basePath": "/api",
+        "schemes": [
+          "https"
+        ],
+        "paths": {
+          "/secrets/{name}": {
+            "get": {
+              "tags": [
+                "secret"
+              ],
+              "summary": "Gets the secret",
+              "description": "This gets the secret.",
+              "operationId": "view",
+              "produces": [
+                "application/json"
+              ],
+              "parameters": [
+                {
+                  "in": "path",
+                  "name": "name",
+                  "description": "The secret name.",
+                  "required": true,
+                  "type": "string"
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Payload of SecretResponseModel",
+                  "schema": {
+                    "$ref": "#/definitions/SecretResponseModel"
+                  },
+                  "x-ms-summary": "Secret response."
+                }
+              },
+              "x-ms-visibility": "important"
+            }
+          },
+          "/secrets": {
+            "get": {
+              "tags": [
+                "secret"
+              ],
+              "summary": "Gets the list of secrets",
+              "description": "This gets the list of secrets.",
+              "operationId": "list",
+              "produces": [
+                "application/json"
+              ],
+              "responses": {
+                "200": {
+                  "description": "Payload of SecretCollectionResponseModel",
+                  "schema": {
+                    "$ref": "#/definitions/SecretCollectionResponseModel"
+                  },
+                  "x-ms-summary": "Secret collection response."
+                }
+              },
+              "x-ms-visibility": "important"
+            }
+          }
+        },
+        "definitions": {
+          "SecretResponseModel": {
+            "type": "object",
+            "properties": {
+              "Name": {
+                "type": "string"
+              },
+              "Value": {
+                "type": "string"
+              }
+            }
+          },
+          "SecretCollectionResponseModel": {
+            "type": "object",
+            "properties": {
+              "Items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Name": {
+                      "type": "string"
+                    },
+                    "Value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "securityDefinitions": {
+          "authKey": {
+            "type": "apiKey",
+            "name": "x-functions-key",
+            "in": "header"
+          }
+        }
+      }
+    }
+  }
 }
